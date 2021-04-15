@@ -5,6 +5,7 @@ import Pagination from "./common/Pagination";
 import ListGroup from "./common/ListGroup";
 import { paginate } from "../utils/paginate";
 import MoviesTable from "./MoviesTable";
+import _ from "lodash";
 
 function Movies() {
   const [pageSize, setPageSize] = useState(4);
@@ -12,13 +13,11 @@ function Movies() {
   const [allMovies, setAllMovies] = useState(getMovies());
   const [genres, setGenres] = useState(getGenres());
   const [selectedGenres, setSelectedGenres] = useState();
+  const [sortColumn, setSortColumn] = useState({
+    path: "title",
+    order: "asc",
+  });
 
-  const filtered =
-    selectedGenres && selectedGenres._id
-      ? allMovies.filter((m) => m.genre._id === selectedGenres._id)
-      : allMovies;
-
-  const movies = paginate(filtered, currentPage, pageSize);
   function deleteMovie(movie) {
     setAllMovies(allMovies.filter((m) => m._id !== movie._id));
   }
@@ -29,7 +28,6 @@ function Movies() {
     newMovies[index] = { ...allMovies[index] };
     newMovies[index].liked = !newMovies[index].liked;
     setAllMovies(newMovies);
-    console.log(genres);
   }
 
   function handlePageChange(page) {
@@ -41,10 +39,33 @@ function Movies() {
     setCurrentPage(1);
   }
 
+  function handleSort(path) {
+    if (sortColumn.path === path) {
+      setSortColumn({
+        path: path,
+        order: sortColumn.order === "asc" ? "desc" : "asc",
+      });
+    } else {
+      setSortColumn({
+        path: path,
+        order: "asc",
+      });
+    }
+  }
+
   useEffect(() => {
-    const genres = [{ name: "All Genres" }, ...getGenres()];
+    const genres = [{ _id: "", name: "All Genres" }, ...getGenres()];
     setGenres(genres);
   }, []);
+
+  const filtered =
+    selectedGenres && selectedGenres._id
+      ? allMovies.filter((m) => m.genre._id === selectedGenres._id)
+      : allMovies;
+
+  const sorted = _.orderBy(filtered, [sortColumn.path], [sortColumn.order]);
+
+  const movies = paginate(sorted, currentPage, pageSize);
 
   if (allMovies.length === 0) return <p>There are no movies in the database</p>;
 
@@ -63,6 +84,7 @@ function Movies() {
           movies={movies}
           onLike={handleLike}
           onDelete={deleteMovie}
+          onSort={handleSort}
         />
         <Pagination
           itemsCount={filtered.length}
