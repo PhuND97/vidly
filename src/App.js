@@ -1,7 +1,12 @@
 import React, { useState } from "react";
+import { Route, Switch, Redirect } from "react-router-dom";
 import "./App.css";
 import Counters from "./components/Counters";
+import Customer from "./components/Customer";
 import Movies from "./components/Movies";
+import MovieForm from "./components/MovieForm";
+import Rentals from "./components/Rentals";
+import NotFound from "./components/NotFound";
 import NavBar from "./components/NavBar";
 
 function App() {
@@ -39,7 +44,6 @@ function App() {
   //   if (newCounter[index].value > 0) newCounter[index].value--;
   //   setCounters(newCounter);
   // }
-
   return (
     <React.Fragment>
       {/* <NavBar totalCounters={counters.filter((c) => c.value > 0).length} />
@@ -52,7 +56,16 @@ function App() {
           counters={counters}
         />
       </main> */}
-      <Movies />
+      <NavBar />
+      <Switch>
+        <Route path="/movies/:id" component={MovieForm} />
+        <Route path="/movies" component={Movies}></Route>
+        <Route path="/customers" component={Customer}></Route>
+        <Route path="/rentals" component={Rentals}></Route>
+        <Route path="/not-found" component={NotFound}></Route>
+        <Redirect from="/" exact to="/movies" />
+        <Redirect to="/not-found" />
+      </Switch>
     </React.Fragment>
   );
 }
