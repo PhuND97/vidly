@@ -6,9 +6,11 @@ import {
   renderButton,
   renderInput,
 } from "../utils/validateForm";
+import { register } from "../services/userService";
+import auth from "../services/authService";
 
-function RegisterForm() {
-  const [data, setData] = useState({ username: "", password: "" });
+function RegisterForm(props) {
+  const [data, setData] = useState({ username: "", password: "", name: "" });
   const [errors, setErrors] = useState({});
 
   const schema = {
@@ -17,12 +19,23 @@ function RegisterForm() {
     name: Joi.string().required().label("Name"),
   };
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
 
     const newErrors = validate(data, schema);
     setErrors(newErrors);
-    if (errors) return;
+    if (newErrors) return;
+    try {
+      const response = await register(data);
+      auth.loginWithJwt(response.headers["x-auth-token"]);
+      window.location = "/";
+    } catch (ex) {
+      if (ex.response && ex.response.status === 400) {
+        const localErrors = { ...errors };
+        localErrors.username = ex.response.data;
+        setErrors(localErrors);
+      }
+    }
   }
 
   function handleChange(e) {

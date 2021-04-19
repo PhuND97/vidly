@@ -42,7 +42,7 @@ export function renderInput(
       value={data[name]}
       label={label}
       onChange={handleChange}
-      error={errors[name]}
+      error={errors && errors[name]}
       type={type}
     />
   );

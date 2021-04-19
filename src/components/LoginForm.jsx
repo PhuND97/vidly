@@ -6,8 +6,9 @@ import {
   renderButton,
   renderInput,
 } from "../utils/validateForm";
+import auth from "../services/authService";
 
-function LoginForm() {
+function LoginForm(props) {
   const [data, setData] = useState({ username: "", password: "" });
   const [errors, setErrors] = useState({});
 
@@ -16,12 +17,23 @@ function LoginForm() {
     password: Joi.string().required().label("Password"),
   };
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
 
     const newErrors = validate(data, schema);
     setErrors(newErrors);
-    if (errors) return;
+    if (newErrors) return;
+
+    try {
+      await auth.login(data.username, data.password);
+      window.location = "/";
+    } catch (ex) {
+      if (ex.response && ex.response.status === 400) {
+        const localErrors = { ...errors };
+        localErrors.username = ex.response.data;
+        setErrors(localErrors);
+      }
+    }
   }
 
   function handleChange(e) {
