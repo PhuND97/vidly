@@ -1,19 +1,20 @@
 import React, { useEffect, useState } from "react";
-import { getMovies } from "../services/fakeMovieService";
-import { getGenres } from "../services/fakeGenreService";
+import { deleteMovie, getMovies } from "../services/movieService";
+import { getGenres } from "../services/genreService";
 import Pagination from "./common/Pagination";
 import ListGroup from "./common/ListGroup";
 import { paginate } from "../utils/paginate";
 import MoviesTable from "./MoviesTable";
 import _ from "lodash";
 import { Link } from "react-router-dom";
+import { toast } from "react-toastify";
 import SearchBox from "./SearchBox";
 
 function Movies() {
   const [pageSize, setPageSize] = useState(4);
   const [currentPage, setCurrentPage] = useState(1);
-  const [allMovies, setAllMovies] = useState(getMovies());
-  const [genres, setGenres] = useState(getGenres());
+  const [allMovies, setAllMovies] = useState([]);
+  const [genres, setGenres] = useState([]);
   const [selectedGenres, setSelectedGenres] = useState(null);
   const [sortColumn, setSortColumn] = useState({
     path: "title",
@@ -21,8 +22,20 @@ function Movies() {
   });
   const [searchQuery, setSearchQuery] = useState("");
 
-  function deleteMovie(movie) {
+  const [totalCount, setTotalCount] = useState(0);
+  const [movies, setMovies] = useState([]);
+
+  async function handleDelete(movie) {
+    const originalMovies = [...movies];
     setAllMovies(allMovies.filter((m) => m._id !== movie._id));
+    try {
+      await deleteMovie(movie._id);
+    } catch (ex) {
+      if (ex.response && ex.response.status === 404)
+        toast.error("This movie has already been deleted");
+
+      setMovies(originalMovies);
+    }
   }
 
   function handleLike(movie) {
@@ -63,13 +76,38 @@ function Movies() {
     }
   }
 
-  useEffect(() => {
-    const genres = [{ _id: "", name: "All Genres" }, ...getGenres()];
+  useEffect(async () => {
+    console.log(1);
+    const { data } = await getGenres();
+    const { data: moviesFromService } = await getMovies();
+
+    const genres = [{ _id: "", name: "All Genres" }, ...data];
     setGenres(genres);
+    setAllMovies(moviesFromService);
+    if (getPagedData.totalCount === 0)
+      return <p>There are no movies in the database</p>;
+
+    setTotalCount(getPagedData().totalCount);
+    setMovies(getPagedData().data);
   }, []);
 
+  useEffect(() => {
+    if (getPagedData.totalCount === 0)
+      return <p>There are no movies in the database</p>;
+
+    setTotalCount(getPagedData().totalCount);
+    setMovies(getPagedData().data);
+  }, [
+    currentPage,
+    searchQuery,
+    totalCount,
+    allMovies,
+    sortColumn,
+    selectedGenres,
+  ]);
+
   function getPagedData() {
-    let filtered = allMovies;
+    let filtered = [...allMovies];
     if (searchQuery)
       filtered = allMovies.filter((m) =>
         m.title.toLowerCase().startsWith(searchQuery.toLowerCase())
@@ -81,13 +119,8 @@ function Movies() {
 
     const movies = paginate(sorted, currentPage, pageSize);
 
-    return { totalCount: filtered.length, data: movies };
+    return { totalCount: filtered?.length, data: movies };
   }
-
-  if (getPagedData.totalCount === 0)
-    return <p>There are no movies in the database</p>;
-
-  const { totalCount, data: movies } = getPagedData();
 
   return (
     <div className="row">
@@ -111,7 +144,7 @@ function Movies() {
         <MoviesTable
           movies={movies}
           onLike={handleLike}
-          onDelete={deleteMovie}
+          onDelete={handleDelete}
           onSort={handleSort}
         />
         <Pagination

@@ -7,8 +7,8 @@ import {
   renderInput,
   renderSelect,
 } from "../utils/validateForm";
-import { getGenres } from "../services/fakeGenreService";
-import { getMovie } from "../services/fakeMovieService";
+import { getGenres } from "../services/genreService";
+import { getMovie, saveMovie } from "../services/movieService";
 
 function MovieForm(props) {
   const [data, setData] = useState({
@@ -37,12 +37,14 @@ function MovieForm(props) {
       .label("Daily Rental Rate"),
   };
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
 
     const newErrors = validate(data, schema);
     setErrors(newErrors);
     if (errors) return;
+
+    await saveMovie(data);
 
     props.history.push("/movies");
   }
@@ -72,16 +74,28 @@ function MovieForm(props) {
     };
   }
 
-  useEffect(() => {
-    setGenres(getGenres);
-    const movieId = props.match.params.id;
-    if (movieId === "new") return;
+  async function populateGenres() {
+    const { data: genres } = await getGenres();
+    setGenres(genres);
+  }
 
-    const movie = getMovie(movieId);
-    if (!movie) return props.history.replace("/not-found");
+  async function populateMovie() {
+    try {
+      const movieId = props.match.params.id;
+      if (movieId === "new") return;
 
-    setData(mapToViewModel(movie));
-  });
+      const { data: movie } = await getMovie(movieId);
+      setData(mapToViewModel(movie));
+    } catch (ex) {
+      if (ex.response && ex.response.status === 404)
+        return props.history.replace("/not-found");
+    }
+  }
+
+  useEffect(async () => {
+    await populateGenres();
+    await populateMovie();
+  }, [genres, data]);
 
   return (
     <div>
