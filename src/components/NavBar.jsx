@@ -32,7 +32,7 @@ function NavBar({ user }) {
           <NavLink className="nav-item nav-link" to="/rentals">
             Rentals
           </NavLink>
-          {Object.keys(user).length === 0 && (
+          {!user ? (
             <React.Fragment>
               <NavLink className="nav-item nav-link" to="/login">
                 Login
@@ -41,8 +41,7 @@ function NavBar({ user }) {
                 Register
               </NavLink>
             </React.Fragment>
-          )}
-          {Object.keys(user).length !== 0 && (
+          ) : (
             <React.Fragment>
               <NavLink className="nav-item nav-link" to="/profile">
                 {user.name}

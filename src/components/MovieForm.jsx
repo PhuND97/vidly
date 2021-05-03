@@ -42,7 +42,7 @@ function MovieForm(props) {
 
     const newErrors = validate(data, schema);
     setErrors(newErrors);
-    if (errors) return;
+    if (newErrors !== null) return;
 
     await saveMovie(data);
 

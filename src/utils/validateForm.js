@@ -56,7 +56,7 @@ export function renderSelect(name, label, handleChange, data, errors, options) {
       label={label}
       options={options}
       onChange={handleChange}
-      error={errors[name]}
+      error={errors && errors[name]}
     />
   );
 }

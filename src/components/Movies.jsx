@@ -77,7 +77,6 @@ function Movies() {
   }
 
   useEffect(async () => {
-    console.log(1);
     const { data } = await getGenres();
     const { data: moviesFromService } = await getMovies();
 

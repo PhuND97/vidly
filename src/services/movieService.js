@@ -22,7 +22,7 @@ export function saveMovie(movie) {
     return axios.put(getMovieUrl(movie._id), body);
   }
 
-  return axios.post(getMovieUrl(movie._id));
+  return axios.post(apiEndpoint, movie);
 }
 
 export function deleteMovie(movieId) {
